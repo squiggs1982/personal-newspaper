@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ paper_title }}</title>
+<style>
+:root { --bg:#f4f1ea; --card:#fffdf8; --ink:#1a1a1a; --muted:#6b6b6b; --accent:#8a1f1f; --line:#e2ddd2; }
+* { box-sizing:border-box; }
+body { margin:0; font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background:var(--bg); color:var(--ink); }
+header.top { background:var(--ink); color:#f4f1ea; padding:18px 28px; display:flex;
+  align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+header.top h1 { margin:0; font-family:Georgia, serif; font-variant:small-caps; font-size:28px; letter-spacing:.04em; }
+header.top .actions a { color:#f4f1ea; text-decoration:none; margin-left:14px; font-size:14px;
+  border:1px solid #555; padding:7px 14px; border-radius:6px; }
+header.top .actions a.primary { background:var(--accent); border-color:var(--accent); }
+header.top .actions a:hover { opacity:.85; }
+main { max-width:1080px; margin:28px auto; padding:0 20px; display:grid;
+  grid-template-columns: 320px 1fr; gap:24px; align-items:start; }
+@media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:24px; }
+.card h2 { margin:0 0 14px; font-size:15px; text-transform:uppercase; letter-spacing:.14em; color:var(--muted); }
+input[type=text], textarea, select { width:100%; padding:9px 11px; border:1px solid var(--line);
+  border-radius:6px; font-size:14px; margin-bottom:10px; background:#fff; font-family:inherit; }
+textarea { min-height:110px; resize:vertical; }
+button, .btn { background:var(--ink); color:#fff; border:0; padding:9px 16px; border-radius:6px;
+  font-size:14px; cursor:pointer; }
+button:hover, .btn:hover { opacity:.85; }
+button.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); padding:5px 10px; font-size:12.5px; }
+button.danger { color:#a33; }
+ul.sources { list-style:none; margin:0; padding:0; }
+ul.sources li { display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:9px 0; border-bottom:1px solid var(--line); font-size:14px; }
+ul.sources .url { display:block; color:var(--muted); font-size:12px; word-break:break-all; }
+.art { border-bottom:1px solid var(--line); padding:12px 0; }
+.art:last-child { border-bottom:0; }
+.art .t { font-family:Georgia, serif; font-size:17px; margin:0 0 4px; }
+.art .meta { color:var(--muted); font-size:12.5px; margin-bottom:8px; }
+.art .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.art .controls form { display:inline; }
+.art .section-tag { font-size:11px; background:#eee7d8; border-radius:4px; padding:2px 7px; color:#6b5d3f; }
+.empty { color:var(--muted); font-size:14px; font-style:italic; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>{{ paper_title }}</h1>
+  <div class="actions">
+    <a href="{{ url_for('paper') }}" target="_blank">Preview paper</a>
+    <a href="{{ url_for('export_html') }}">Download HTML</a>
+    <a class="primary" href="{{ url_for('export_epub') }}">Download EPUB</a>
+  </div>
+</header>
+<main>
+  <div>
+    <div class="card">
+      <h2>Add a blog / feed</h2>
+      <form method="post" action="{{ url_for('add_source') }}">
+        <input type="text" name="name" placeholder="Name (e.g. My Substack)" required>
+        <input type="text" name="url" placeholder="Site or feed URL (substack.com, medium.com, …)" required>
+        <button type="submit">Add source</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Add an article</h2>
+      <form method="post" action="{{ url_for('add_article') }}">
+        <input type="text" name="title" placeholder="Title (optional)">
+        <input type="text" name="section" placeholder="Section (default: News)">
+        <textarea name="content" placeholder="Paste an article URL, HTML, or plain text…" required></textarea>
+        <button type="submit">Add article</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Your sources</h2>
+      {% if sources %}
+      <ul class="sources">
+        {% for s in sources %}
+        <li>
+          <div><strong>{{ s.name }}</strong><span class="url">{{ s.url }}</span></div>
+          <div>
+            <form method="post" action="{{ url_for('sync', sid=s.id) }}" style="display:inline"><button class="ghost" type="submit">Sync</button></form>
+            <form method="post" action="{{ url_for('del_source', sid=s.id) }}" style="display:inline"><button class="ghost danger" type="submit">✕</button></form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty">No sources yet.</p>{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <h2>Article library ({{ articles|length }})</h2>
+    {% if articles %}
+      {% for a in articles %}
+      <div class="art">
+        <p class="t">{{ a.title }}</p>
+        <div class="meta">
+          {% if a.author %}By {{ a.author }} · {% endif %}
+          {% if a.published %}{{ a.published[:10] }} · {% endif %}
+          {{ a.source_name or 'pasted' }}
+          · <span class="section-tag">{{ a.section }}</span>
+          {% if not a.in_paper %}· <em>excluded</em>{% endif %}
+        </div>
+        <div class="controls">
+          <form method="post" action="{{ url_for('toggle', aid=a.id) }}">
+            <button class="ghost" type="submit">{{ 'Exclude' if a.in_paper else 'Include' }}</button>
+          </form>
+          <form method="post" action="{{ url_for('set_section', aid=a.id) }}">
+            <input type="text" name="section" value="{{ a.section }}" style="width:110px;display:inline-block;margin:0;padding:5px 8px;font-size:12.5px">
+            <button class="ghost" type="submit">Move</button>
+          </form>
+          <form method="post" action="{{ url_for('del_article', aid=a.id) }}">
+            <button class="ghost danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}<p class="empty">No articles yet — add a source or paste an article.</p>{% endif %}
+  </div>
+</main>
+</body>
+</html>

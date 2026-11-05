@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+newspaper.db
+exports/*
+!exports/.gitkeep

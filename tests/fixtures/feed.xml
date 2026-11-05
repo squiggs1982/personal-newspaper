@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>The Weekly Dispatch</title>
+    <link>https://example.substack.com</link>
+    <item>
+      <title>Why slow mornings matter</title>
+      <link>https://example.substack.com/p/slow-mornings</link>
+      <pubDate>Wed, 01 May 2024 09:00:00 GMT</pubDate>
+      <author>sam@example.com (Sam Writer)</author>
+      <description>The case for a calmer start to the day.</description>
+    </item>
+    <item>
+      <title>Second post</title>
+      <link>https://example.substack.com/p/second-post</link>
+      <pubDate>Thu, 02 May 2024 09:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>
